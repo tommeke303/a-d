@@ -14,7 +14,7 @@
 
 (library
  (avl-tree)
- (export new bst? null-tree null-tree? clear-tree!
+ (export new bst? null-tree null-tree? clear-tree! insert-join!
          empty? full? insert! delete! find
          left left! right right! balance balance! value value!
          root root!)
@@ -252,11 +252,35 @@
  
  (define (clear-tree! avl)
    (root! avl null-tree)
-   (newline)
-   (display "clear avl")
-   (newline)
+   
    avl
    )
+
+ (define (insert-join! avl val)
+   (define <<? (lesser avl))
+   (define ==? (equality avl))
+   
+   (let insert-rec
+     ((parent null-tree)
+      (child! (lambda (ignore child) (root! avl child)))
+      (child (root avl)))
+     (cond
+       ((null-tree? child)
+        (child! parent (make-AVL-node val null-tree null-tree balanced))
+        #t)
+       ((<<? (value child) val)
+        (if (insert-rec child right! (right child))
+          (check-after-insert-right parent child! child)
+          #f))
+       ((<<? val (value child))
+        (if (insert-rec child left! (left child))
+          (check-after-insert-left parent child! child) 
+          #f))
+       (else  ; value = (AVL-node-value node)
+        (newline)
+        (value! child (cons (car (value child)) (cons (cadr val) (cdr (value child)))))
+        #f)))
+   avl)
  
  (define (delete! avl val)
    (define ==? (equality avl))

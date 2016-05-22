@@ -186,25 +186,11 @@
  (define M 5)
  
  (define (make-dictionary smaller)
-  (define equal-keys? (lambda (x y)
-;                        (newline)
-;                        (display "x: ")
-;                        (display x)
-;                        (newline)
-;                        (display "y: ")
-;                        (display y)
-;                        (newline)
-                        (and (not (smaller (car x) (car y))) (not (smaller (car y) (car x))))))
-  (avl:new equal-keys? (lambda (x y)
-;                         (newline)
-;                        (display "x: ")
-;                        (display x)
-;                        (newline)
-;                        (display "y: ")
-;                        (display y)
-;                        (newline)
-                         (smaller (car x) (car y))))
-  ) 
+   (define smaller? (lambda (x y)
+                      (smaller (car x) (car y))))
+   (define equal-keys? (lambda (x y) (and (not (smaller? x y)) (not (smaller? y x)))))
+   (avl:new equal-keys? smaller?)
+   ) 
 
 (define (for-all-chunks tabl key-col smaller proc)
   
@@ -220,10 +206,8 @@
            ((not (equal? status done)) (proc dict) (return 'done))
            ((>= block-number (- M 1)) (proc dict) (loop-chunk 0 0 (tbl:set-current-to-next! tabl)))
            (else
-            (newline)
-            (display "insert: ")
-            (display (tbl:peek-join tabl key-col))
-            (avl:insert! dict (tbl:peek-join tabl key-col))
+            
+            (avl:insert-join! dict (tbl:peek-join tabl key-col))
                  
             (if (< (+ block-index 1) cap)
                  (loop-chunk block-number (+ block-index 1) (tbl:set-current-to-next! tabl))
@@ -247,13 +231,17 @@
                    (lambda (dict)
                      (for-all-tuples-join t2 a2
                                           (lambda (tuple curr)
-                                            (newline)
-                                              (display "tuple: ")
-                                              (display tuple)
                                             (let ((res (avl:find dict tuple)))
-                                              
                                               (when res
-                                                (set! output-list (cons (cons (cadr res) (cdr tuple)) output-list)))
+                                              (let loop-tuples ((res (cdr res)))
+                                                
+                                                  (if (null? (cdr res))
+                                                      (set! output-list (cons (cons (car res) (cdr tuple)) output-list))
+                                                      (begin (set! output-list (cons (cons (car res) (cdr tuple)) output-list))
+                                                           (loop-tuples (cdr res)))))
+                                                )
+                                              
+                                              
                                               )
                                             )
                                           )
