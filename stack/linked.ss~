@@ -1,0 +1,60 @@
+#lang r6rs
+
+;-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+;-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+;-*-*                                                                 *-*-
+;-*-*                 Stacks (Linked Implementation)                  *-*-
+;-*-*                                                                 *-*-
+;-*-*                       Wolfgang De Meuter                        *-*-
+;-*-*                 2008 Programming Technology Lab                 *-*-
+;-*-*                   Vrije Universitent Brussel                    *-*-
+;-*-*                                                                 *-*-
+;-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+;-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+
+(library
+ (stack)
+ (export new stack? push! pop! top empty? full?)
+ (import (rnrs base)
+         (rnrs mutable-pairs))
+ 
+ (define stack-tag 'linked-stack)
+ (define (make)
+   (cons stack-tag '()))
+ (define (scheme-list stack)
+   (cdr stack))
+ (define (scheme-list! stack slst)
+   (set-cdr! stack slst))
+ 
+ (define (new)
+   (make))
+ 
+ (define (stack? any)
+   (and (pair? any)
+        (eq? (car any) stack-tag)))
+ 
+ (define (push! stack val)
+   (define slst (scheme-list stack))
+   (scheme-list! stack (cons val slst))
+   stack)
+ 
+ (define (top stack)
+   (define slst (scheme-list stack))
+   (if (null? slst)
+     (error "stack empty (top)" stack))
+   (car slst))
+ 
+ (define (pop! stack)
+   (define slst (scheme-list stack))
+   (if (null? slst)
+     (error "stack empty (pop!)" stack))
+   (let ((val (car slst)))
+     (scheme-list! stack (cdr slst))
+     val))
+ 
+ (define (empty? stack)
+   (define slst (scheme-list stack))
+   (null? slst))
+ 
+ (define (full? stack)
+   #f))

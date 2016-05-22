@@ -1,0 +1,69 @@
+#lang r6rs
+
+;-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+;-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+;-*-*                                                                 *-*-
+;-*-*                stack (Amortized Implementation)                 *-*-
+;-*-*                                                                 *-*-
+;-*-*                       Wolfgang De Meuter                        *-*-
+;-*-*                  2011  Software Languages Lab                   *-*-
+;-*-*                   Vrije Universiteit Brussel                    *-*-
+;-*-*                                                                 *-*-
+;-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+;-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
+
+(library
+ (stack)
+ (export new stack? push! pop! top empty? full?)
+ (import (rnrs base)
+         (srfi :9)
+         (rnrs control)
+         (rnrs mutable-pairs))
+ 
+ (define initial-size 1)
+ 
+ (define-record-type stack
+   (make f s)
+   stack?
+   (f first-free first-free!)
+   (s storage storage!))
+ 
+ (define (new)
+   (make 0 (make-vector initial-size ())))
+ 
+ (define (push! stack val)
+   (define vector (storage stack))
+   (define ff (first-free stack))
+   (define (extend-vector)
+     (define new-vector (make-vector (* (vector-length vector) 2) '()))
+     (do ((i 0 (+ i 1)))
+       ((= i ff) new-vector)
+       (vector-set! new-vector i (vector-ref vector i))))
+   (when (= ff (vector-length vector))
+     (set! vector (extend-vector))
+     (storage! stack vector))
+   (vector-set! vector ff val)
+   (first-free! stack (+ ff 1))
+   stack)
+ 
+ (define (top stack)
+   (define vector (storage stack))
+   (define ff (first-free stack))
+   (if (= ff 0)
+     (error "stack empty (top)" stack))
+   (vector-ref vector (- ff 1)))
+ 
+ (define (pop! stack)
+   (define vector (storage stack))
+   (define ff (first-free stack))
+   (if (= ff 0)
+     (error "stack empty (pop!)" stack))
+   (let ((val (vector-ref vector (- ff 1))))
+     (first-free! stack (- ff 1))
+     val))
+ 
+ (define (empty? stack)
+   (= (first-free stack) 0))
+ 
+ (define (full? stack)
+   #f))
